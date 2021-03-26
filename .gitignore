@@ -30,3 +30,4 @@ public/extra-*
 *.ignored.*
 ignored/
 .eslintcache
+.idea/
