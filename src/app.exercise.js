@@ -2,24 +2,76 @@
 import {jsx} from '@emotion/core'
 
 import * as React from 'react'
-// 🐨 you're going to need this:
-// import * as auth from 'auth-provider'
+import * as auth from 'auth-provider'
+import {client} from './utils/api-client.exercise'
 import {AuthenticatedApp} from './authenticated-app'
 import {UnauthenticatedApp} from './unauthenticated-app'
+import {useAsync} from './utils/hooks'
+import {FullPageSpinner} from './components/lib'
+import * as colors from 'styles/colors'
+
+async function getUser() {
+  return auth.getToken().then(token => {
+    if (token) {
+      return client('me', {token}).then(data => data.user)
+    }
+  })
+}
 
 function App() {
-  // 🐨 useState for the user
+  const {
+    isIdle,
+    isLoading,
+    isError,
+    setData,
+    error,
+    data: user,
+    run,
+  } = useAsync()
 
-  // 🐨 create a login function that calls auth.login then sets the user
-  // 💰 const login = form => auth.login(form).then(u => setUser(u))
-  // 🐨 create a registration function that does the same as login except for register
+  async function login(credentials) {
+    auth.login(credentials).then(u => setData(u))
+  }
 
-  // 🐨 create a logout function that calls auth.logout() and sets the user to null
+  async function register(credentials) {
+    auth.register(credentials).then(u => setData(u))
+  }
 
-  // 🐨 if there's a user, then render the AuthenticatedApp with the user and logout
-  // 🐨 if there's not a user, then render the UnauthenticatedApp with login and register
+  async function logout() {
+    auth.logout().then(() => setData(null))
+  }
 
-  return <UnauthenticatedApp />
+  React.useEffect(() => {
+    run(getUser())
+  }, [run, setData])
+
+  if (isLoading || isIdle) {
+    return <FullPageSpinner />
+  }
+
+  if (isError) {
+    return (
+      <div
+        css={{
+          color: colors.danger,
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <p>Uh oh... There's a problem. Try refreshing the app.</p>
+        <pre>{error.message}</pre>
+      </div>
+    )
+  }
+
+  return user ? (
+    <AuthenticatedApp logout={logout} user={user} />
+  ) : (
+    <UnauthenticatedApp login={login} register={register} />
+  )
 }
 
 export {App}

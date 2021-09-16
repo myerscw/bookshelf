@@ -17,7 +17,7 @@ function LoginForm({onSubmit, submitButton}) {
       onSubmit({
         username: username.value,
         password: password.value,
-      }),
+      }).catch(() => {}),
     )
   }
 
